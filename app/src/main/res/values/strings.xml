@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Aquele Meme</string>
+    <string name="action_settings">Settings</string>
+    <string name="img_name">Como quer chamar esse meme?</string>
+    <string name="save_image_dialog_title">Salvar meme</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancelar</string>
+    <string name="title_activity_save_meme">Salvar Meme</string>
+    <string name="add_tag">Adicionar TAG</string>
+    <string name="meme_saved">Meme salvo</string>
+    <string name="no_tag_error">Adicione uma TAG</string>
+    <string name="share_meme">Compartilhar meme</string>
+</resources>
