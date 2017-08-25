@@ -18,6 +18,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -27,6 +30,7 @@ import android.widget.Toast;
 
 import com.snatik.storage.Storage;
 import com.squareup.picasso.Picasso;
+import com.theartofdev.edmodo.cropper.CropImage;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +57,40 @@ public class SaveMemeActivity extends AppCompatActivity {
             }
         }else{
             prepareActivity();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.save_meme_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // action with ID action_refresh was selected
+            case R.id.save_meme_menu_crop:
+                CropImage.activity(memeUri).start(this);
+                break;
+            default:
+                break;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                Uri resultUri = result.getUri();
+                handleCroppedMeme(resultUri);
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+            }
         }
     }
 
@@ -107,6 +145,11 @@ public class SaveMemeActivity extends AppCompatActivity {
 
     private void handleReceivedMeme(Intent intent) {
         memeUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        Picasso.with(context).load(memeUri).into(ivMeme);
+    }
+
+    private void handleCroppedMeme(Uri croppedImg) {
+        memeUri = croppedImg;
         Picasso.with(context).load(memeUri).into(ivMeme);
     }
 
