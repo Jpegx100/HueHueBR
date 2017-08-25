@@ -92,8 +92,7 @@ public class SaveMemeActivity extends AppCompatActivity {
                     Intent intent = new Intent(context, MainActivity.class);
                     startActivity(intent);
                 }else{
-                    Snackbar.make(view, getString(R.string.no_tag_error), Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    Toast.makeText(context, getString(R.string.no_tag_error), Toast.LENGTH_SHORT).show();
                 }
             }
         };

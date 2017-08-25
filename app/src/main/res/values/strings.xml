@@ -10,4 +10,6 @@
     <string name="meme_saved">Meme salvo</string>
     <string name="no_tag_error">Adicione uma TAG</string>
     <string name="share_meme">Compartilhar meme</string>
+    <string name="search_title">Pesquisar</string>
+    <string name="search">Procurar</string>
 </resources>

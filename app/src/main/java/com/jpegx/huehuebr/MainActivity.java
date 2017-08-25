@@ -1,5 +1,6 @@
 package com.jpegx.huehuebr;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,17 +9,26 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import com.snatik.storage.Storage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -30,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private GridView gridView;
     private Context context;
     private List<Meme> memes;
+    private List<Meme> allMemes;
     private MemeAdapter memeAdapter;
 
     @Override
@@ -45,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         context = MainActivity.this;
         memes = Meme.listAll(Meme.class);
+        allMemes = Meme.listAll(Meme.class);
+        Collections.reverse(memes);
+        Collections.reverse(allMemes);
 
         fab = (FloatingActionButton) findViewById(R.id.btSaveMeme);
         fab.setOnClickListener(onClickAdd());
@@ -82,9 +96,70 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+        final MenuItem searchItem = menu.findItem(R.id.action_search);
+
+        if (searchItem != null) {
+            final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+            searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+                @Override
+                public boolean onClose() {
+                    memes.clear();
+                    memes.addAll(allMemes);
+                    memeAdapter.notifyDataSetChanged();
+                    searchView.onActionViewCollapsed();
+                    return true;
+                }
+            });
+            searchView.setOnSearchClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                }
+            });
+            EditText searchPlate = (EditText) searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+            searchPlate.setHint(getString(R.string.search));
+            View searchPlateView = searchView.findViewById(android.support.v7.appcompat.R.id.search_plate);
+            searchPlateView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
+            // use this method for search process
+            searchView.setOnQueryTextListener(onQuerySearchText());
+            SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private SearchView.OnQueryTextListener onQuerySearchText() {
+        return new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchMeme(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searchMeme(newText);
+                return false;
+            }
+        };
+    }
+
+    private void searchMeme(String query){
+        ArrayList<Meme> tempMemes = new ArrayList<Meme>();
+        if(!query.equals("")) {
+            for (Meme m : allMemes) {
+                if (m.tags.toLowerCase().contains(query.toLowerCase())) {
+                    tempMemes.add(m);
+                }
+            }
+            memes.clear();
+            memes.addAll(tempMemes);
+        }else{
+            memes.clear();
+            memes.addAll(allMemes);
+        }
+        memeAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -92,12 +167,6 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
 
         return super.onOptionsItemSelected(item);
     }

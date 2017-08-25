@@ -6,12 +6,15 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Vibrator;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
+import android.widget.TextView;
 
 import com.snatik.storage.Storage;
 import com.squareup.picasso.Picasso;
@@ -51,34 +54,47 @@ class MemeAdapter extends BaseAdapter{
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ImageView imageView;
+        LayoutInflater inflater;
+        View gridView;
+        Meme meme = memes.get(position);
+
         if(convertView==null){
-            imageView = new ImageView(context);
-            imageView.setLayoutParams(new GridView.LayoutParams(250, 250));
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            imageView.setPadding(8, 8, 8, 8);
+            inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            gridView = inflater.inflate(R.layout.meme_item, parent, false);
+
+            TextView textView = (TextView) gridView.findViewById(R.id.meme_item_tv_tag);
+            textView.setText(meme.tags);
+
+            ImageView imageView = (ImageView) gridView.findViewById(R.id.meme_item_iv_meme);
+
+            Storage store = new Storage(context);
+            final File file = store.getFile(meme.path);
+            Picasso picasso = Picasso.with(context);
+            picasso.setLoggingEnabled(true);
+            picasso.load(file)
+                    .resize(250, 250)
+                    .centerCrop()
+                    .error(R.mipmap.ic_launcher)
+                    .into(imageView);
+
+            imageView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+                    vibrator.vibrate(200);
+
+                    final Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("image/jpeg");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_meme)));
+                }
+            });
         }else{
-            imageView = (ImageView) convertView;
+            gridView = convertView;
         }
 
-        Storage store = new Storage(context);
-        final File file = store.getFile(memes.get(position).path);
-        Picasso picasso = Picasso.with(context);
-        picasso.setLoggingEnabled(true);
-        picasso.load(file)
-                .error(R.drawable.ic_launcher)
-                .into(imageView);
-        imageView.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                final Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("image/jpeg");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_meme)));
-            }
-        });
-        return imageView;
+        return gridView;
     }
 }

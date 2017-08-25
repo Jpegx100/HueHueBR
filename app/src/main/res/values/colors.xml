@@ -2,7 +2,8 @@
 <resources>
     <color name="colorPrimary">#212121</color>
     <color name="colorPrimaryDark">#000000</color>
+    <color name="colorPrimaryTransparent">#c5212121</color>
     <color name="colorAccent">#212121</color>
     <color name="white">#e0e0e0</color>
-    <color name="white_transparent">#a4e0e0e0</color>
+    <color name="white_transparent">#d0e0e0e0</color>
 </resources>
