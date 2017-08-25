@@ -56,7 +56,7 @@ class MemeAdapter extends BaseAdapter{
     public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater;
         View gridView;
-        Meme meme = memes.get(position);
+        final Meme meme = memes.get(position);
 
         if(convertView==null){
             inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -67,6 +67,7 @@ class MemeAdapter extends BaseAdapter{
 
             ImageView imageView = (ImageView) gridView.findViewById(R.id.meme_item_iv_meme);
 
+            final String type = meme.path.substring(meme.path.lastIndexOf(".")+1);
             Storage store = new Storage(context);
             final File file = store.getFile(meme.path);
             Picasso picasso = Picasso.with(context);
@@ -85,7 +86,7 @@ class MemeAdapter extends BaseAdapter{
                     vibrator.vibrate(200);
 
                     final Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("image/jpeg");
+                    shareIntent.setType("image/"+type);
                     shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
                     shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_meme)));

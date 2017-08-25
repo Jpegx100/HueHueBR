@@ -1,5 +1,6 @@
 package com.jpegx.huehuebr;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -69,14 +71,17 @@ public class SaveMemeActivity extends AppCompatActivity {
                 if(etTags.getText()!=null && etTags.getText().toString()!=null
                         && etTags.getText().toString().length()>0) {
                     Storage storage = new Storage(context);
+
                     String fromPath = memeUri.getPath();
+                    String extension = getMimeType(context, memeUri);
+
                     String[] subParts = fromPath.split("/");
                     String toPath = storage.getExternalStorageDirectory(Environment.DIRECTORY_PICTURES)
                             + File.separator + "AqueleMeme";
                     if (!storage.isDirectoryExists(toPath)) {
                         storage.createDirectory(toPath);
                     }
-                    toPath += File.separator + subParts[subParts.length - 1] + ".jpeg";
+                    toPath += File.separator + subParts[subParts.length - 1] + "." + extension;
                     try {
                         Bitmap bitmap = null;
                         bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), memeUri);
@@ -96,6 +101,22 @@ public class SaveMemeActivity extends AppCompatActivity {
                 }
             }
         };
+    }
+
+    public static String getMimeType(Context context, Uri uri) {
+        String extension;
+
+        //Check uri format to avoid null
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            //If scheme is a content
+            final MimeTypeMap mime = MimeTypeMap.getSingleton();
+            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
+        } else {
+            //If scheme is a File
+            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
+            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
+        }
+        return extension;
     }
 
 }
