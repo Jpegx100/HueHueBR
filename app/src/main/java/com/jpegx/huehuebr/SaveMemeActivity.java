@@ -1,17 +1,23 @@
 package com.jpegx.huehuebr;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -39,14 +45,23 @@ public class SaveMemeActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        context = SaveMemeActivity.this;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkPermission()) {
+                prepareActivity();
+            } else {
+                requestPermission();
+            }
+        }else{
+            prepareActivity();
+        }
+    }
 
+    private void prepareActivity() {
+        context = SaveMemeActivity.this;
         btSaveMeme = (FloatingActionButton) findViewById(R.id.btSaveMeme);
         btSaveMeme.setOnClickListener(onClickSaveMeme());
-
         ivMeme = (ImageView) findViewById(R.id.save_meme_iv_meme);
         etTags = (EditText) findViewById(R.id.save_meme_et_tags);
-
         Intent intent = getIntent();
         String action = intent.getAction();
         String type = intent.getType();
@@ -56,7 +71,38 @@ public class SaveMemeActivity extends AppCompatActivity {
                 handleReceivedMeme(intent);
             }
         }
+    }
 
+    protected boolean checkPermission() {
+        int result = ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected void requestPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            Toast.makeText(this, "É preciso da permissão para escrita", Toast.LENGTH_LONG).show();
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 100);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 100:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    prepareActivity();
+                } else {
+                    Log.e("value", "Permissão negada. Não é possível escrever na memória externa.");
+                }
+                break;
+        }
     }
 
     private void handleReceivedMeme(Intent intent) {
@@ -68,37 +114,32 @@ public class SaveMemeActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(etTags.getText()!=null && etTags.getText().toString()!=null
-                        && etTags.getText().toString().length()>0) {
-                    Storage storage = new Storage(context);
+                Storage storage = new Storage(context);
 
-                    String fromPath = memeUri.getPath();
-                    String extension = getMimeType(context, memeUri);
+                String fromPath = memeUri.getPath();
+                String extension = getMimeType(context, memeUri);
 
-                    String[] subParts = fromPath.split("/");
-                    String toPath = storage.getExternalStorageDirectory(Environment.DIRECTORY_PICTURES)
-                            + File.separator + "AqueleMeme";
-                    if (!storage.isDirectoryExists(toPath)) {
-                        storage.createDirectory(toPath);
-                    }
-                    toPath += File.separator + subParts[subParts.length - 1] + "." + extension;
-                    try {
-                        Bitmap bitmap = null;
-                        bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), memeUri);
-                        storage.createFile(toPath, bitmap);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    Meme meme = new Meme(toPath, etTags.getText().toString());
-                    meme.save();
-
-                    Toast.makeText(context, getString(R.string.meme_saved), Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(context, MainActivity.class);
-                    startActivity(intent);
-                }else{
-                    Toast.makeText(context, getString(R.string.no_tag_error), Toast.LENGTH_SHORT).show();
+                String[] subParts = fromPath.split("/");
+                String toPath = storage.getExternalStorageDirectory(Environment.DIRECTORY_PICTURES)
+                        + File.separator + "AqueleMeme";
+                if (!storage.isDirectoryExists(toPath)) {
+                    storage.createDirectory(toPath);
                 }
+                toPath += File.separator + subParts[subParts.length - 1] + "." + extension;
+                try {
+                    Bitmap bitmap = null;
+                    bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), memeUri);
+                    storage.createFile(toPath, bitmap);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Meme meme = new Meme(toPath, etTags.getText().toString());
+                meme.save();
+
+                Toast.makeText(context, getString(R.string.meme_saved), Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(context, MainActivity.class);
+                startActivity(intent);
             }
         };
     }
